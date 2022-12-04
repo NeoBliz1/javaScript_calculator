@@ -1,0 +1,8 @@
+{
+	"short_name": "Neobliz1 JavaScript Calculator project",
+	"name": "Neobliz1's freeCodeCamp project 'JavaScript Calculator'",
+	"start_url": ".",
+	"display": "standalone",
+	"theme_color": "#000000",
+	"background_color": "#ffffff"
+}

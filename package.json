@@ -1,5 +1,5 @@
 {
-	"name": "JavaScript Calculator",
+	"name": "javaScript_calculator",
 	"version": "1.0.0",
 	"homepage": "https://neobliz1.github.io/javaScript_calculator/",
 	"description": "#freeCodeCamp project",
@@ -22,5 +22,10 @@
 		"predeploy": "npm run build",
 		"deploy": "gh-pages -d build"
 	},
-	"browserslist": [">0.2%", "not dead", "not ie <= 11", "not op_mini all"]
+	"browserslist": [
+		">0.2%",
+		"not dead",
+		"not ie <= 11",
+		"not op_mini all"
+	]
 }
