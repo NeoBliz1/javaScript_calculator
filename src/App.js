@@ -535,7 +535,7 @@ const App = () => {
 	//focus on the app's div for keyDown react listner
 	useEffect(() => {
 		// console.log(display[0] === 0);
-		//appDivRef.current.focus();
+		appDivRef.current.focus();
 	}, []);
 
 	return (
@@ -567,13 +567,13 @@ const App = () => {
 									overflow: 'hidden',
 								}}>
 								<div
-									className="flex-row-reverse mr-2 row"
+									className="flex-row-reverse mx-2 row"
 									style={{
 										minHeight: '30px',
 									}}>
 									{display[0] === 0 ? ' ' : display}
 								</div>
-								<div id="display" className="flex-row-reverse mr-2 row">
+								<div id="display" className="flex-row-reverse mx-2 row">
 									{calcResult}
 								</div>
 							</div>
