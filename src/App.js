@@ -1,5 +1,3 @@
-//https://codesandbox.io/s/react-bootstrap-demo-forked-tsy8jb
-
 import React, { useState, useEffect, useRef } from 'react';
 
 import './styles.css';
@@ -7,7 +5,8 @@ import './styles.css';
 //********************************drum_button_component
 const ButtonComponent = (props) => {
 	//console.log("DrumButton component rendered");
-	const { num, keyPressedValue, keystrokesNumber, calculatorHandler } = props;
+	const { id, num, keyPressedValue, keystrokesNumber, calculatorHandler } =
+		props;
 
 	const btnBasicStyle = {
 		backgroundColor: '#007bff',
@@ -54,6 +53,7 @@ const ButtonComponent = (props) => {
 	}, [keyPressedValue, keystrokesNumber]);
 	return (
 		<button
+			id={id}
 			className="btn-lg flex-fill btn btn-primary"
 			style={{ ...btnBasicStyle, ...buttonStateStyle }}
 			onClick={padPressed}>
@@ -64,7 +64,13 @@ const ButtonComponent = (props) => {
 //**********************buttons_panel_component*************************/
 const ButtonsPanel = (props) => {
 	//console.log("ButtonsPanel component rendered");
-	const { keyPressedValue, keystrokesNumber, setDisplay } = props;
+	const {
+		keyPressedValue,
+		keystrokesNumber,
+		setDisplay,
+		setCalcResult,
+		calcResult,
+	} = props;
 
 	const numberPicker = new RegExp('^[0-9]*$');
 	const dotPicker = /\./i;
@@ -72,6 +78,7 @@ const ButtonsPanel = (props) => {
 	const [equationObj, setEquationObj] = useState({
 		equationArr: [0],
 		activeArrayElement: 0,
+		formulaCalculated: false,
 	});
 
 	//**********************************equations handler*******/
@@ -84,15 +91,29 @@ const ButtonsPanel = (props) => {
 		setEquationObj((prevState) => ({
 			equationArr: copyCurrEquiationArr,
 			activeArrayElement: prevState.activeArrayElement,
+			formulaCalculated: prevState.formulaCalculated,
 		}));
 	};
 	const removeLastELFromEquiationArray = () => {
 		let copyCurrEquiationArr = [...equationObj.equationArr];
 		let slicedArray = copyCurrEquiationArr.slice(0, -1);
-		//console.log(slicedArray);
+		//console.log('removeLastELFromEquiationArray');
 		setEquationObj((prevState) => ({
 			equationArr: slicedArray,
 			activeArrayElement: prevState.activeArrayElement - 1,
+			formulaCalculated: prevState.formulaCalculated,
+		}));
+	};
+	const rem2LastElAddCurrSymToEquationArr = (symbol) => {
+		let getIndexOfActiveEl = equationObj.activeArrayElement;
+		let copyCurrEquiationArr = [...equationObj.equationArr];
+		let slicedArray = copyCurrEquiationArr.slice(0, -2);
+
+		let newIndexOfActiveEl = getIndexOfActiveEl - 1;
+		setEquationObj((prevState) => ({
+			equationArr: [...slicedArray, symbol],
+			activeArrayElement: newIndexOfActiveEl,
+			formulaCalculated: prevState.formulaCalculated,
 		}));
 	};
 	const replaceCurrActiveElementInEquiationArray = (symbol) => {
@@ -109,36 +130,56 @@ const ButtonsPanel = (props) => {
 
 		let copyCurrEquiationArr = [...equationObj.equationArr];
 
-		copyCurrEquiationArr[
-			equationObj.activeArrayElement
-		] = addButtonSymbolToValFromArray;
+		copyCurrEquiationArr[equationObj.activeArrayElement] =
+			addButtonSymbolToValFromArray;
 
 		//console.log(copyCurrEquiationArr);
 
 		setEquationObj((prevState) => ({
 			equationArr: copyCurrEquiationArr,
 			activeArrayElement: prevState.activeArrayElement,
+			formulaCalculated: prevState.formulaCalculated,
 		}));
 	};
-	const addElementToEquationArr = (symbolForDisplay) => {
+	const addElementToEquationArr = (symbol) => {
 		let getIndexOfActiveEl = equationObj.activeArrayElement;
 		let newIndexOfActiveEl = getIndexOfActiveEl + 1;
 		//console.log("IAEl " + newIndexOfActiveEl);
+		//set formula calculated flag
 		setEquationObj((prevState) => ({
-			equationArr: [...prevState.equationArr, symbolForDisplay],
+			equationArr: [...prevState.equationArr, symbol],
 			activeArrayElement: newIndexOfActiveEl,
+			formulaCalculated: symbol === '=' ? true : prevState.formulaCalculated,
 		}));
 	};
 
 	const calculatorHandler = (buttonSymbol) => {
-		if (buttonSymbol === 'ACC') {
-			//console.log("ACC is active");
-			setEquationObj({
-				equationArr: [0],
-				activeArrayElement: 0,
-			});
-			// if number
-		} else if (numberPicker.test(buttonSymbol)) {
+		const activeEquiationArrElement =
+			equationObj.equationArr[equationObj.activeArrayElement];
+		const elBeforeActiveEquiationArrElement =
+			equationObj.equationArr[equationObj.activeArrayElement - 1];
+		// if clear button or new calculationstarted
+		if (buttonSymbol === 'ACC' || equationObj.formulaCalculated) {
+			//if buttonSymbol is /*+- then continue calculaing, else ACC
+			if (
+				equationObj.formulaCalculated &&
+				['/', 'X', '-', '+'].includes(buttonSymbol)
+			) {
+				setEquationObj({
+					equationArr: [calcResult, buttonSymbol],
+					activeArrayElement: 1,
+					formulaCalculated: false,
+				});
+			} else {
+				setEquationObj({
+					equationArr: [0],
+					activeArrayElement: 0,
+					formulaCalculated: false,
+				});
+				setCalcResult(0);
+			}
+		} // if number
+		else if (numberPicker.test(buttonSymbol)) {
 			//if first element of array is 0 and length of array is 1 replace
 			if (
 				equationObj.equationArr[0] === 0 &&
@@ -147,14 +188,11 @@ const ButtonsPanel = (props) => {
 				setEquationObj((prevState) => ({
 					equationArr: [buttonSymbol],
 					activeArrayElement: prevState.activeArrayElement,
+					formulaCalculated: prevState.formulaCalculated,
 				}));
 			}
 			// if active element includes  "/", "x", "-", "+" then add number to equationArr
-			else if (
-				['/', 'x', '-', '+'].includes(
-					equationObj.equationArr[equationObj.activeArrayElement],
-				)
-			) {
+			else if (['/', 'x', '-', '+'].includes(activeEquiationArrElement)) {
 				addElementToEquationArr(buttonSymbol);
 			}
 			// if active element don't includes  "/", "x", "-", "+"
@@ -172,26 +210,40 @@ const ButtonsPanel = (props) => {
 				replaceCurrActiveElementInEquiationArray(buttonSymbol);
 			}
 			//if buttonSymbol includes /*-+
-		} else if (['/', 'X', '-', '+'].includes(buttonSymbol)) {
+		} //if operator
+		else if (
+			['/', 'X', '-', '+'].includes(buttonSymbol) &&
+			equationObj.equationArr[0] !== 0
+		) {
 			//if last character of active element in array includes dot
 			//then remove dot
+			//console.log('operator ' + buttonSymbol);
 			if (
 				dotPicker.test(
-					equationObj.equationArr[equationObj.activeArrayElement][
-						equationObj.equationArr[equationObj.activeArrayElement].length - 1
-					],
+					activeEquiationArrElement[activeEquiationArrElement.length - 1],
 				)
 			) {
 				removeLastCharFromCurrActiveElInEquiationArray();
 			}
+
 			//if buttonSymbol = X then toLowerCase buttonSymbol
 			let symbolForDisplay =
 				buttonSymbol === 'X' ? buttonSymbol.toLowerCase() : buttonSymbol;
-			//id array last element includes /*-+
+
+			//if active array element includes /*+- and
+			//array element before the current includes /*+
 			if (
-				['/', 'x', '-', '+'].includes(
-					equationObj.equationArr[equationObj.activeArrayElement],
-				)
+				['/', 'x', '+', '-'].includes(activeEquiationArrElement) &&
+				['/', 'x', '+'].includes(elBeforeActiveEquiationArrElement) &&
+				buttonSymbol !== '-'
+			) {
+				//remove 2 last element, add symbolForDisplay to equationArr
+				rem2LastElAddCurrSymToEquationArr(symbolForDisplay);
+			} //if array last element includes - or /*+ and butonSymbol not -
+			else if (
+				['-'].includes(activeEquiationArrElement) ||
+				(['/', 'x', '+'].includes(activeEquiationArrElement) &&
+					buttonSymbol !== '-')
 			) {
 				// console.log(equationObj.activeArrayElement);
 				replaceCurrActiveElementInEquiationArray(symbolForDisplay);
@@ -199,21 +251,20 @@ const ButtonsPanel = (props) => {
 				addElementToEquationArr(symbolForDisplay);
 			}
 			//console.log("operator" + buttonSymbol);
-		} else if (buttonSymbol === '=') {
+		} //if '=' sign
+		else if (
+			buttonSymbol === '=' &&
+			equationObj.equationArr[0] !== 0 &&
+			equationObj.equationArr.length > 2
+		) {
 			//check if dot
 			if (
 				dotPicker.test(
-					equationObj.equationArr[equationObj.activeArrayElement][
-						equationObj.equationArr[equationObj.activeArrayElement].length - 1
-					],
+					activeEquiationArrElement[activeEquiationArrElement.length - 1],
 				)
 			) {
 				removeLastCharFromCurrActiveElInEquiationArray();
-			} else if (
-				!numberPicker.test(
-					equationObj.equationArr[equationObj.activeArrayElement],
-				)
-			) {
+			} else if (['/', 'X', '-', '+'].includes(activeEquiationArrElement)) {
 				removeLastELFromEquiationArray();
 			}
 			addElementToEquationArr(buttonSymbol);
@@ -221,16 +272,41 @@ const ButtonsPanel = (props) => {
 	};
 
 	useEffect(() => {
-		if (equationObj.equationArr[equationObj.activeArrayElement] === '=') {
-			let copyArr = [...equationObj.equationArr];
+		// console.log(typeof parseFloat(equationObj.equationArr[0]));
+		// console.log('activeArrayElement ' + equationObj.activeArrayElement);
+		// console.log('lenght ' + equationObj.equationArr.length);
+
+		//copy formula array
+		let copyArr = [...equationObj.equationArr];
+
+		//if activeArrayElement more than 2 and
+		//if active element includes  "/", "x", "-", "+"
+		//then get result
+		if (
+			equationObj.activeArrayElement > 2 &&
+			['/', 'x', '-', '+', '='].includes(
+				equationObj.equationArr[equationObj.activeArrayElement],
+			)
+		) {
+			//sliced = symbol
 			let slicedArr = copyArr.slice(0, -1);
 			let joinedArr = slicedArr.join('');
 			let replaceXtoStar = joinedArr.replace(/x/g, '*');
+
+			//get result
 			let result = eval(replaceXtoStar);
-			addElementToEquationArr(result);
+
+			setCalcResult(result);
+
+			//if last element in formyla '='
+			//add result to formula arr
+			if (equationObj.equationArr[equationObj.activeArrayElement] === '=') {
+				addElementToEquationArr(result);
+			}
 		} else {
-			setDisplay(equationObj.equationArr);
+			setCalcResult(equationObj.equationArr[equationObj.activeArrayElement]);
 		}
+		setDisplay(equationObj.equationArr);
 	}, [equationObj]);
 
 	return (
@@ -239,6 +315,7 @@ const ButtonsPanel = (props) => {
 				<div className="calcButtonsRow row">
 					<div className="col-12 p-1 col">
 						<ButtonComponent
+							id="clear"
 							num={'ACC'}
 							keyPressedValue={keyPressedValue}
 							keystrokesNumber={keystrokesNumber}
@@ -249,6 +326,7 @@ const ButtonsPanel = (props) => {
 				<div className="calcButtonsRow row">
 					<div className="col-6 p-1 col">
 						<ButtonComponent
+							id={'seven'}
 							num={'7'}
 							keyPressedValue={keyPressedValue}
 							keystrokesNumber={keystrokesNumber}
@@ -257,6 +335,7 @@ const ButtonsPanel = (props) => {
 					</div>
 					<div className="col-6 p-1 col">
 						<ButtonComponent
+							id={'eight'}
 							num={'8'}
 							keyPressedValue={keyPressedValue}
 							keystrokesNumber={keystrokesNumber}
@@ -267,6 +346,7 @@ const ButtonsPanel = (props) => {
 				<div className="calcButtonsRow row">
 					<div className="col-6 p-1 col">
 						<ButtonComponent
+							id={'four'}
 							num={'4'}
 							keyPressedValue={keyPressedValue}
 							keystrokesNumber={keystrokesNumber}
@@ -275,6 +355,7 @@ const ButtonsPanel = (props) => {
 					</div>
 					<div className="col-6 p-1 col">
 						<ButtonComponent
+							id={'five'}
 							num={'5'}
 							keyPressedValue={keyPressedValue}
 							keystrokesNumber={keystrokesNumber}
@@ -285,6 +366,7 @@ const ButtonsPanel = (props) => {
 				<div className="calcButtonsRow row">
 					<div className="col-6 p-1 col">
 						<ButtonComponent
+							id={'one'}
 							num={'1'}
 							keyPressedValue={keyPressedValue}
 							keystrokesNumber={keystrokesNumber}
@@ -293,6 +375,7 @@ const ButtonsPanel = (props) => {
 					</div>
 					<div className="col-6 p-1 col">
 						<ButtonComponent
+							id={'two'}
 							num={'2'}
 							keyPressedValue={keyPressedValue}
 							keystrokesNumber={keystrokesNumber}
@@ -304,6 +387,7 @@ const ButtonsPanel = (props) => {
 					<div className="col-12 p-1 col">
 						<ButtonComponent
 							num={0}
+							id={'zero'}
 							keyPressedValue={keyPressedValue}
 							keystrokesNumber={keystrokesNumber}
 							calculatorHandler={calculatorHandler}
@@ -315,6 +399,7 @@ const ButtonsPanel = (props) => {
 				<div className="calcButtonsRow row">
 					<div className="p-1 col">
 						<ButtonComponent
+							id="divide"
 							num={'/'}
 							keyPressedValue={keyPressedValue}
 							keystrokesNumber={keystrokesNumber}
@@ -325,6 +410,7 @@ const ButtonsPanel = (props) => {
 				<div className="calcButtonsRow row">
 					<div className="p-1 col">
 						<ButtonComponent
+							id={'nine'}
 							num={9}
 							keyPressedValue={keyPressedValue}
 							keystrokesNumber={keystrokesNumber}
@@ -335,6 +421,7 @@ const ButtonsPanel = (props) => {
 				<div className="calcButtonsRow row">
 					<div className="p-1 col">
 						<ButtonComponent
+							id={'six'}
 							num={6}
 							keyPressedValue={keyPressedValue}
 							keystrokesNumber={keystrokesNumber}
@@ -345,6 +432,7 @@ const ButtonsPanel = (props) => {
 				<div className="calcButtonsRow row">
 					<div className="p-1 col">
 						<ButtonComponent
+							id={'three'}
 							num={3}
 							keyPressedValue={keyPressedValue}
 							keystrokesNumber={keystrokesNumber}
@@ -355,6 +443,7 @@ const ButtonsPanel = (props) => {
 				<div className="calcButtonsRow row">
 					<div className="p-1 col">
 						<ButtonComponent
+							id="decimal"
 							num={'.'}
 							keyPressedValue={keyPressedValue}
 							keystrokesNumber={keystrokesNumber}
@@ -367,6 +456,7 @@ const ButtonsPanel = (props) => {
 				<div className="calcButtonsRow row">
 					<div className="p-1 col">
 						<ButtonComponent
+							id="multiply"
 							num={'X'}
 							keyPressedValue={keyPressedValue}
 							keystrokesNumber={keystrokesNumber}
@@ -377,6 +467,7 @@ const ButtonsPanel = (props) => {
 				<div className="calcButtonsRow row">
 					<div className="p-1 col">
 						<ButtonComponent
+							id="add"
 							num={'+'}
 							keyPressedValue={keyPressedValue}
 							keystrokesNumber={keystrokesNumber}
@@ -387,6 +478,7 @@ const ButtonsPanel = (props) => {
 				<div className="calcButtonsRow row">
 					<div className="p-1 col">
 						<ButtonComponent
+							id="subtract"
 							num={'-'}
 							keyPressedValue={keyPressedValue}
 							keystrokesNumber={keystrokesNumber}
@@ -401,6 +493,7 @@ const ButtonsPanel = (props) => {
 							height: '120px',
 						}}>
 						<ButtonComponent
+							id={'equals'}
 							num={'='}
 							keyPressedValue={keyPressedValue}
 							keystrokesNumber={keystrokesNumber}
@@ -416,6 +509,7 @@ const ButtonsPanel = (props) => {
 const App = () => {
 	//console.log("App rendered");
 	const cardStyle = {
+		backgroundColor: 'black',
 		width: '350px',
 		border: '0.3rem solid #0848A3',
 		borderRadius: '0.5rem',
@@ -424,8 +518,9 @@ const App = () => {
 	const appDivRef = useRef();
 
 	//console.log("component App rendered");
-	const [bgColor] = useState('aliceblue');
-	const [display, setDisplay] = useState(0);
+	const [bgColor] = useState('darkslategray');
+	const [display, setDisplay] = useState('');
+	const [calcResult, setCalcResult] = useState(0);
 	const [keyPressedValue, setKeyPressedValue] = useState();
 	const [keystrokesNumber, setKeystrokesNumber] = useState(0);
 	//console.log("app render");
@@ -439,6 +534,7 @@ const App = () => {
 
 	//focus on the app's div for keyDown react listner
 	useEffect(() => {
+		// console.log(display[0] === 0);
 		//appDivRef.current.focus();
 	}, []);
 
@@ -450,13 +546,16 @@ const App = () => {
 				style={{ backgroundColor: bgColor, minWidth: '250px' }}>
 				<div className="w-100 d-flex justify-content-center">
 					<div style={cardStyle} className="inner-container card">
-						<div id="text" className="text-right mr-2 mb-0 card-title h5">
+						<div
+							id="text"
+							style={{ color: 'orange' }}
+							className="text-right mr-2 mb-0 card-title h5">
 							FCC
 							<i className="inner-logo fa fa-free-code-camp ml-1" />
 						</div>
 						<div className="d-flex flex-wrap align-items-center justify-content-center pt-0 card-body">
 							<div
-								className="flex-row-reverse p-2 m-2 align-items-end row"
+								className="flex-col p-2 m-2 col"
 								style={{
 									backgroundColor: 'aquamarine',
 									height: 'auto',
@@ -467,12 +566,23 @@ const App = () => {
 									lineHeight: '30px',
 									overflow: 'hidden',
 								}}>
-								{display}
+								<div
+									className="flex-row-reverse mr-2 row"
+									style={{
+										minHeight: '30px',
+									}}>
+									{display[0] === 0 ? ' ' : display}
+								</div>
+								<div id="display" className="flex-row-reverse mr-2 row">
+									{calcResult}
+								</div>
 							</div>
 							<ButtonsPanel
 								keyPressedValue={keyPressedValue}
 								keystrokesNumber={keystrokesNumber}
 								setDisplay={setDisplay}
+								setCalcResult={setCalcResult}
+								calcResult={calcResult}
 							/>
 						</div>
 					</div>
