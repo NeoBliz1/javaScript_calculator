@@ -1,16 +1,16 @@
-@import url("https://maxcdn.bootstrapcdn.com/bootstrap/latest/css/bootstrap.min.css");
+@import url('https://maxcdn.bootstrapcdn.com/bootstrap/latest/css/bootstrap.min.css');
 
 .App {
-  font-family: sans-serif;
-  text-align: center;
+	font-family: sans-serif;
+	text-align: center;
 }
 
-@media screen and (min-width: 900px) {
-  .inner-container {
-    transform: scale(1.4);
-  }
+@media screen and (min-width: 1400px) {
+	.inner-container {
+		transform: scale(1.4);
+	}
 }
 
 .calcButtonsRow {
-  height: 60px;
+	height: 60px;
 }
