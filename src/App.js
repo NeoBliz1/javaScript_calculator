@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 
 import './styles.css';
 
-//********************************drum_button_component
+//********************************button_component
 const ButtonComponent = (props) => {
-	//console.log("DrumButton component rendered");
 	const { id, num, keyPressedValue, keystrokesNumber, calculatorHandler } =
 		props;
 
